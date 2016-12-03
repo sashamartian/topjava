@@ -6,8 +6,8 @@ import ru.javawebinar.topjava.model.UserMealWithExceed;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 /**
  * GKislin
@@ -30,6 +30,30 @@ public class UserMealsUtil {
 
     public static List<UserMealWithExceed>  getFilteredWithExceeded(List<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         // TODO return filtered list with correctly exceeded field
-        return null;
+        Map<LocalDateTime, Integer> caloriesDayList = new HashMap<>();
+        List<UserMealWithExceed> userMealWithExceedList = new ArrayList<>();
+
+        // составляем список дата - общее за дату
+        for (UserMeal userMeal : mealList) {
+            if (caloriesDayList.containsKey(userMeal.getDateTime().truncatedTo(ChronoUnit.DAYS))) {
+                caloriesDayList.put(userMeal.getDateTime().truncatedTo(ChronoUnit.DAYS),
+                        caloriesDayList.get(userMeal.getDateTime().truncatedTo(ChronoUnit.DAYS)) + userMeal.getCalories());
+            } else {
+                caloriesDayList.put(userMeal.getDateTime().truncatedTo(ChronoUnit.DAYS), userMeal.getCalories());
+            }
+        }
+
+        // отфильтровываем данные
+        for (UserMeal userMeal : mealList) {
+            if (TimeUtil.isBetween(userMeal.getDateTime().toLocalTime(), startTime, endTime)) {
+                userMealWithExceedList.add(new UserMealWithExceed(
+                        userMeal.getDateTime(),
+                        userMeal.getDescription(),
+                        userMeal.getCalories(),
+                        caloriesDayList.get(userMeal.getDateTime().truncatedTo(ChronoUnit.DAYS)) > caloriesPerDay));
+            }
+        }
+
+        return userMealWithExceedList;
     }
 }
